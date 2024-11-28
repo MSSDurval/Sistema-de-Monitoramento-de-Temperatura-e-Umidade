@@ -27,6 +27,7 @@ const char* getSensorName() {
 DHT dht(DHTPIN, DHTTYPE); //Inicializa o sensor DHT no pino de dados.
 LiquidCrystal_I2C* tela; // Inicializa a tela (ou display) I2C
 
+void (*reiniciaSistema)(void) = 0; //Função que reinicia o Sistema. Ela aponta para o endereço 0.
 void setup() {
   Serial.begin(9600);
   Wire.begin();
@@ -90,6 +91,14 @@ void setup() {
     sensorIniciado = false;
     Serial.println("Falha ao iniciar o sensor!");
     tela->print("Erro no Sensor!");
+    delay(3000);
+    tela->clear();
+    tela->print("Reiniciando...");
+    Serial.println("Reiniciando Sistema...");
+    delay(3000);
+    tela->noBacklight();
+    tela->noDisplay();
+    reiniciaSistema();  //Reinicia o sistema em caso de falha no Sensor.
   } else {
     sensorIniciado = true;
     Serial.print("Sensor ");
@@ -104,7 +113,7 @@ void setup() {
   
   for (int i = 0; i < 3; i++) {
   Serial.print("."); 
-  delay(2500);  // Tempo que o sensor coleta os dados na 1 vez.        
+  delay(2500);  // Tempo que o sensor coleta os dados na 1ª vez.        
   }
   Serial.println("\n");
 }
@@ -114,9 +123,19 @@ void loop() {
   float umidade = dht.readHumidity();
   float temperatura = dht.readTemperature();
 
-  if(isnan(umidade) || isnan(temperatura)){
+  if(isnan(umidade) || isnan(temperatura) || sensorIniciado == false){
     Serial.println("Falha na coleta de informações do sensor.");
     tela->print("Falha no sensor."); 
+    delay(3500);
+    tela->clear();
+    tela->print("Sistema");
+    tela->setCursor(0, 1);
+    tela->print("Inoperante");
+    Serial.println("Sistema inoperante, devido falha no sensor");
+    delay(3500);
+    tela->noBacklight();
+    tela->noDisplay();
+    tela->clear();
   }else{
     // Exibe no monitor serial
     Serial.println("**************************************************");
